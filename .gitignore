@@ -37,3 +37,8 @@ env/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Secrets and credentials
+*.json
+!package.json
+!tsconfig.json

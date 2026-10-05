@@ -1,12 +1,18 @@
 =================================================================
-API CONTRACT v1  (source of truth, identical in the frontend prompt)
+API CONTRACT v1.1  (source of truth, identical in the frontend prompt)
 =================================================================
 Conventions: JSON UTF-8, snake_case keys, difficulty/confidence enums are capitalized exactly as shown.
 
 GET /api/health
-  200 {"status": "ok", "model": "<gemma model id>", "fixture_mode": false}
+  200 {"status": "ok", "model": "<gemma model id>", "fixture_mode": false, "auth_required": false}
+
+GET /api/me
+  Headers: Authorization: Bearer <token> (required if AUTH_REQUIRED=true)
+  200 {"uid": "string", "name": "string", "email": "string", "picture": "string", "provider": "string"}
+  (When AUTH_REQUIRED=false and no token is provided, returns an anonymous placeholder)
 
 POST /api/analyze   (multipart/form-data)
+  Headers: Authorization: Bearer <token> (required if AUTH_REQUIRED=true)
   repository_url: string, required. Only https://github.com/{owner}/{repo}; tolerate a trailing slash, ".git", or "/tree/..." suffix.
   screenshot: file, optional. image/png, image/jpeg, image/webp. Max MAX_UPLOAD_MB.
 
@@ -57,6 +63,6 @@ POST /api/analyze   (multipart/form-data)
 }
 
 Error responses: matching HTTP status and body {"error": {"code": "<CODE>", "message": "string"}}
-  INVALID_URL 400 | IMAGE_INVALID 415 | IMAGE_TOO_LARGE 413 | REPO_NOT_FOUND 404 |
+  UNAUTHENTICATED 401 | INVALID_URL 400 | IMAGE_INVALID 415 | IMAGE_TOO_LARGE 413 | REPO_NOT_FOUND 404 |
   GITHUB_RATE_LIMIT 429 | MODEL_ERROR 502 | MODEL_INVALID_OUTPUT 502 | INTERNAL 500
 =================================================================
