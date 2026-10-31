@@ -10,7 +10,7 @@ This is the FastAPI backend for OSContro. It analyzes GitHub repositories and ge
 5. Copy `.env.example` to `.env` and fill it in.
 
 ## Environment Variables
-- `GEMINI_API_KEY`: Your Google Gemini API key (must start with `AIza`).
+- `GEMINI_API_KEY`: Your Google Gemini API key (supports standard `AQ...` or `AIza...` keys from Google AI Studio).
 - `GEMMA_MODEL`: `models/gemma-4-26b-a4b-it` or `models/gemma-4-31b-it`.
 - `GITHUB_TOKEN`: (Optional) Prevents GitHub rate limiting.
 - `AUTH_REQUIRED`: Set to `true` to require Firebase ID token verification.

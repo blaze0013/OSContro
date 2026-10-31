@@ -42,3 +42,5 @@ Thumbs.db
 *.json
 !package.json
 !tsconfig.json
+!tsconfig.*.json
+!frontend/src/lib/

@@ -27,18 +27,24 @@ def mock_gemma_generate():
 def test_analyze_fixture_mode():
     os.environ["FIXTURE_MODE"] = "true"
     os.environ["AUTH_REQUIRED"] = "false"
+    os.environ["GENAI_AUTH"] = "api_key"
+    os.environ["GEMINI_API_KEY"] = "fake_key"
     resp = client.post("/api/analyze", data={"repository_url": "https://github.com/foo/bar"})
     assert resp.status_code == 200
 
 def test_analyze_invalid_url():
     os.environ["FIXTURE_MODE"] = "false"
     os.environ["AUTH_REQUIRED"] = "false"
+    os.environ["GENAI_AUTH"] = "api_key"
+    os.environ["GEMINI_API_KEY"] = "fake_key"
     resp = client.post("/api/analyze", data={"repository_url": "http://not-github.com/a/b"})
     assert resp.status_code == 400
 
 def test_analyze_valid_mocked(mock_fetch_github_context, mock_gemma_generate):
     os.environ["FIXTURE_MODE"] = "false"
     os.environ["AUTH_REQUIRED"] = "false"
+    os.environ["GENAI_AUTH"] = "api_key"
+    os.environ["GEMINI_API_KEY"] = "fake_key"
     resp = client.post("/api/analyze", data={"repository_url": "https://github.com/foo/bar"})
     assert resp.status_code == 200
 
@@ -52,9 +58,13 @@ def test_analyze_adc_auth(mock_auth):
     mock_creds.quota_project_id = 'test_project'
     mock_auth.return_value = (mock_creds, 'test_project')
     os.environ['GENAI_AUTH'] = 'adc'
+    os.environ.pop('GEMINI_API_KEY', None)
+    os.environ.pop('GOOGLE_API_KEY', None)
     svc = gemma_module.GemmaService()
     assert svc.auth_mode == 'adc'
     mock_auth.assert_called_once()
+    os.environ['GENAI_AUTH'] = 'api_key'
+    os.environ['GEMINI_API_KEY'] = 'fake_key'
 
 
 @patch('app.services.gemma.GemmaService.verify_evidence')
@@ -67,6 +77,8 @@ def test_analyze_agentic_mode(mock_generate, mock_minimal, mock_fetch_specific, 
     os.environ['AGENTIC_MODE'] = 'true'
     os.environ['FIXTURE_MODE'] = 'false'
     os.environ['AUTH_REQUIRED'] = 'false'
+    os.environ['GENAI_AUTH'] = 'api_key'
+    os.environ['GEMINI_API_KEY'] = 'fake_key'
     
     class MockBuilder:
         repo_meta = {}
@@ -97,3 +109,12 @@ def test_analyze_agentic_mode(mock_generate, mock_minimal, mock_fetch_specific, 
     mock_minimal.assert_called_once()
     mock_plan.assert_called_once()
     os.environ['AGENTIC_MODE'] = 'false'
+
+def test_analyze_aq_api_key():
+    os.environ['GENAI_AUTH'] = 'api_key'
+    os.environ['GEMINI_API_KEY'] = 'AQ.test_key_sample_12345'
+    import app.services.gemma as gemma_module
+    svc = gemma_module.GemmaService()
+    assert svc.auth_mode == 'api_key'
+    assert svc.client._api_client.api_key == 'AQ.test_key_sample_12345'
+    assert svc.client._api_client.vertexai is False

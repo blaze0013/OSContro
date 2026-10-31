@@ -2,7 +2,7 @@ import { useAuth } from '../lib/auth';
 import { isFirebaseConfigured } from '../lib/firebase';
 
 export function LoginScreen() {
-  const { signInWithGoogle, signInWithGitHub, error, loading } = useAuth();
+  const { signInWithGoogle, signInWithGitHub, signInAsGuest, error, loading } = useAuth();
   const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
   if (loading) {
@@ -39,7 +39,7 @@ export function LoginScreen() {
 
         {showNotConfigured && (
           <div className="bg-[var(--color-notice-bg)] border border-[var(--color-notice-border)] text-[var(--color-notice-text)] text-sm p-4 rounded-lg mb-6">
-            Firebase is not configured. Please set the VITE_FIREBASE_* environment variables or enable VITE_USE_MOCK=true.
+            Firebase is not configured. Please set the VITE_FIREBASE_* environment variables or continue as guest below to test with the backend.
           </div>
         )}
 
@@ -74,6 +74,15 @@ export function LoginScreen() {
             </svg>
             Continue with GitHub
           </button>
+
+          {showNotConfigured && (
+            <button
+              onClick={signInAsGuest}
+              className="w-full flex items-center justify-center px-4 py-3 border border-[var(--color-border-strong)] rounded-lg shadow-[var(--shadow-warm)] bg-[var(--color-page)] text-[var(--color-text-primary)] font-medium hover:bg-[var(--color-raised)] transition-colors"
+            >
+              Continue as Guest (Connects to Backend)
+            </button>
+          )}
         </div>
 
         <p className="mt-8 text-xs text-[var(--color-text-secondary)]">

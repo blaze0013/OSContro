@@ -1,7 +1,7 @@
 import os
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import asyncio
 import google.genai as genai
 from google.genai import types
@@ -67,21 +67,31 @@ _ADC_CREDS = None
 
 class GemmaService:
     def __init__(self):
-        self.auth_mode = os.getenv("GENAI_AUTH", "api_key").lower()
-        self.model = os.getenv("GEMMA_MODEL", "models/gemma-4-26b-a4b-it")
-        
+        api_key = (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip().strip("'\"")
+        raw_auth_mode = os.getenv("GENAI_AUTH", "api_key").lower()
+
+        sa_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        has_sa_file = bool(sa_creds and Path(sa_creds).exists())
+
+        if api_key and (raw_auth_mode == "api_key" or not has_sa_file):
+            self.auth_mode = "api_key"
+        else:
+            self.auth_mode = raw_auth_mode
+
+        model_name = os.getenv("GEMMA_MODEL", "gemma-4-26b-a4b-it").strip()
+        if model_name.startswith("models/"):
+            model_name = model_name[7:]
+        self.model = model_name
+
         if self.auth_mode == "adc":
             import google.auth
             try:
                 creds, proj = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
             except Exception as e:
                 raise APIError(500, "INTERNAL", f"ADC Auth failed: {e}")
-                
+
             project_id = proj or os.getenv("FIREBASE_PROJECT_ID") or "oscontro"
-            
-            # Developer API blocks Service Accounts. We MUST use Vertex AI for ADC.
-            # Gemma 4 is not natively on Vertex, so we fallback to gemini-1.5-flash.
-            self.model = "gemini-1.5-flash"
+            self.model = os.getenv("GEMMA_MODEL", "gemini-1.5-flash")
             self.client = genai.Client(
                 vertexai=True,
                 project=project_id,
@@ -90,16 +100,17 @@ class GemmaService:
             )
         elif self.auth_mode == "vertex":
             raise APIError(500, "INTERNAL", "Vertex AI mode is not supported for Gemma 4 models directly. Use 'adc' or 'api_key'.")
-            
+
         else:
-            api_key = os.getenv("GEMINI_API_KEY")
             if not api_key:
                 raise APIError(500, "INTERNAL", "GEMINI_API_KEY is not configured")
-            self.client = genai.Client(api_key=api_key)
+            # Explicitly set vertexai=False to ensure keys starting with AQ. or AIza
+            # route to Gemini Developer API (Google AI Studio)
+            self.client = genai.Client(api_key=api_key, vertexai=False)
 
     def _strip_json(self, text: str) -> str:
         """Strip markdown code fences and extract the outermost JSON object."""
-        text = text.strip()
+        text = (text or "").strip()
         if text.startswith("```json"):
             text = text[7:]
         elif text.startswith("```"):
@@ -127,19 +138,43 @@ class GemmaService:
         return [prompt]
 
     def _call_model(self, contents) -> str:
-        """Synchronous wrapper — called via asyncio.to_thread."""
-        response = self.client.models.generate_content(
-            model=self.model, contents=contents
-        )
-        return response.text
+        """Synchronous wrapper — called via asyncio.to_thread with automatic resilient fallback."""
+        candidate_models = [self.model]
+        for fallback in ["gemma-4-26b-a4b-it", "gemma-4-31b-it", "gemini-3.5-flash-lite", "gemini-3.5-flash"]:
+            if fallback not in candidate_models:
+                candidate_models.append(fallback)
 
-    def _map_error(self, e: Exception) -> APIError:
+        last_error = None
+        for m in candidate_models:
+            clean_m = m.strip()
+            if clean_m.startswith("models/"):
+                clean_m = clean_m[7:]
+            try:
+                response = self.client.models.generate_content(
+                    model=clean_m, contents=contents
+                )
+                if response and response.text:
+                    self.model = clean_m
+                    return response.text
+            except Exception as e:
+                last_error = e
+                err_str = str(e).lower()
+                if "401" in err_str or "unauthenticated" in err_str or "access_token_type_unsupported" in err_str:
+                    raise e
+                continue
+        if last_error:
+            raise last_error
+        return ""
+    @staticmethod
+    def _map_error(e: Exception) -> APIError:
         """Map genai SDK errors to our contract APIError."""
+        if isinstance(e, APIError):
+            return e
         err_str = str(e).lower()
         if hasattr(e, "code") or "401" in err_str or "403" in err_str or "unauthenticated" in err_str:
             detail = str(e)
             if "ACCESS_TOKEN_TYPE_UNSUPPORTED" in detail:
-                detail = "API key starts with 'AQ.' and requires proper Google Cloud/OAuth configuration, or use an 'AIza' API key."
+                detail = "Authentication rejected by Gemini API. Please verify your GEMINI_API_KEY is valid and active in Google AI Studio."
             return APIError(401, "MODEL_ERROR", "Gemini API rejected the API key/credentials", detail=detail)
         elif "404" in err_str or "not_found" in err_str or "not found" in err_str:
             return APIError(404, "MODEL_ERROR", "Model not found; check GEMMA_MODEL", detail=str(e))

@@ -55,8 +55,16 @@ app.include_router(analyze.router, prefix="/api")
 
 @app.get("/api/health")
 async def health():
-    model = os.getenv("GEMMA_MODEL", "")
-    fixture_mode = os.getenv("FIXTURE_MODE", "false").lower() == "true"
+    model = os.getenv("GEMMA_MODEL", "models/gemma-4-31b-it")
+    api_key = (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip().strip("'\"")
+    fixture_env = os.getenv("FIXTURE_MODE", "").lower()
+    if fixture_env == "true":
+        fixture_mode = True
+    elif fixture_env == "false":
+        fixture_mode = False
+    else:
+        fixture_mode = not bool(api_key)
+
     return {
         "status": "ok",
         "model": model,
@@ -66,19 +74,29 @@ async def health():
 
 @app.get("/api/health/model")
 async def health_model():
-    model = os.getenv("GEMMA_MODEL", "")
+    model = os.getenv("GEMMA_MODEL", "models/gemma-4-31b-it")
+    api_key = (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip().strip("'\"")
+    auth_mode = os.getenv("GENAI_AUTH", "api_key").lower()
+    
+    if not api_key and auth_mode != "adc":
+        return {
+            "ok": False,
+            "model": model,
+            "detail": "GEMINI_API_KEY is not configured in backend/.env"
+        }
     try:
         from app.services.gemma import GemmaService
         svc = GemmaService()
-        # make a tiny call
         await svc.client.aio.models.generate_content(
             model=svc.model,
             contents=["Say 'ok'"]
         )
-        return {"ok": True, "model": model, "detail": None}
+        return {"ok": True, "model": svc.model, "detail": None}
+    except APIError as ae:
+        return {"ok": False, "model": model, "detail": ae.detail or ae.message}
     except Exception as e:
-        svc = GemmaService()
-        err = svc._map_error(e)
+        from app.services.gemma import GemmaService
+        err = GemmaService._map_error(e)
         return {"ok": False, "model": model, "detail": err.detail or err.message}
 
 @app.get("/api/me")

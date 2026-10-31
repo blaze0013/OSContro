@@ -22,9 +22,9 @@ const getFriendlyErrorMessage = (code: string, message: string): string => {
     case 'IMAGE_TOO_LARGE':
       return 'The screenshot is too large. Please upload an image smaller than 5MB.';
     case 'MODEL_ERROR':
-      return 'The AI model encountered an unexpected error while analyzing the repository. Please try again.';
+      return message || 'The AI model encountered an unexpected error while analyzing the repository. Please try again.';
     case 'MODEL_INVALID_OUTPUT':
-      return 'The AI model returned an invalid response format. Please try analyzing the repository again.';
+      return message || 'The AI model returned an invalid response format. Please try analyzing the repository again.';
     case 'UNAUTHENTICATED':
       return 'Your session expired. Please sign in again.';
     case 'INTERNAL':
