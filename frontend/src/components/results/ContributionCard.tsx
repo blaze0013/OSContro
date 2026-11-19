@@ -33,7 +33,7 @@ export function ContributionCard({ contribution, index }: ContributionCardProps)
 
   return (
     <div 
-      className="relative float-card-wrap h-full"
+      className="relative float-card-wrap flex flex-col flex-1 h-full min-h-[420px]"
       onMouseEnter={() => setIsFocused(true)}
       onMouseLeave={() => setIsFocused(false)}
       onFocus={() => setIsFocused(true)}
@@ -50,42 +50,44 @@ export function ContributionCard({ contribution, index }: ContributionCardProps)
         glareColor={isDark ? '212, 143, 78' : '255, 255, 255'}
         radius={12}
         shadow={isDark ? 0.35 : 0.15}
-        containerHeight="100%"
+        containerHeight="auto"
         containerWidth="100%"
-        className={`float-card ${floatClass} h-full z-10`}
+        imageHeight="auto"
+        imageWidth="100%"
+        className={`float-card ${floatClass} w-full flex flex-col flex-1 min-h-[420px] z-10`}
       >
         <div 
           tabIndex={0}
           className={`card-sweep relative bg-[var(--color-surface)] rounded-[12px] border ${
             isFocused ? 'border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]/30' : 'border-[var(--color-border-strong)]'
-          } shadow-[var(--shadow-warm)] overflow-hidden flex flex-col h-full transition-all duration-300 ease-out focus:outline-none`}
+          } shadow-[var(--shadow-warm)] flex flex-col flex-1 w-full min-h-[420px] transition-all duration-300 ease-out focus:outline-none`}
         >
-        <div className="p-6 border-b border-[var(--color-border-strong)] bg-[var(--color-raised)] flex-1">
+        <div className="p-6 border-b border-[var(--color-border-strong)] bg-[var(--color-raised)] flex-1 flex flex-col">
           <div className="flex items-start justify-between mb-4 gap-4">
-            <h3 className="text-lg font-bold text-[var(--color-text-primary)] leading-tight">
-              <span className="text-[var(--color-accent)] mr-2">#{index + 1}</span>
-              {contribution.title}
+            <h3 className="text-lg font-bold text-[var(--color-text-primary)] leading-tight break-words">
+              <span className="text-[var(--color-accent)] mr-2 shrink-0">#{index + 1}</span>
+              <span className="break-words">{contribution.title}</span>
             </h3>
             <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium shrink-0 chip-pop ${badgeColor}`}>
               {contribution.difficulty}
             </span>
           </div>
           
-          <p className="text-[var(--color-text-primary)] text-sm mb-6 leading-relaxed">{contribution.description}</p>
+          <p className="text-[var(--color-text-primary)] text-sm mb-6 leading-relaxed break-words">{contribution.description}</p>
 
-          <div className="space-y-4">
+          <div className="space-y-4 mt-auto">
             <div>
               <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Why it's useful</h4>
-              <p className="text-sm text-[var(--color-text-primary)] leading-relaxed">{contribution.why_useful}</p>
+              <p className="text-sm text-[var(--color-text-primary)] leading-relaxed break-words">{contribution.why_useful}</p>
             </div>
             <div>
               <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Why it's beginner friendly</h4>
-              <p className="text-sm text-[var(--color-text-primary)] leading-relaxed">{contribution.why_beginner_friendly}</p>
+              <p className="text-sm text-[var(--color-text-primary)] leading-relaxed break-words">{contribution.why_beginner_friendly}</p>
             </div>
           </div>
         </div>
 
-        <div className="p-6 bg-[var(--color-page)]">
+        <div className="p-6 bg-[var(--color-page)] flex flex-col rounded-b-[12px]">
           <div className="mb-4 flex items-center justify-between">
             <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">Target Files</h4>
             {!contribution.paths_verified && (
@@ -145,7 +147,7 @@ export function ContributionCard({ contribution, index }: ContributionCardProps)
                     style={{ animationDelay: `${i * 40}ms` }}
                   >
                     <span className="font-semibold text-[var(--color-text-primary)] block mb-0.5">{ev.source}:</span>
-                    <span className="text-[var(--color-text-secondary)] italic leading-relaxed">"{ev.detail}"</span>
+                    <span className="text-[var(--color-text-secondary)] italic leading-relaxed break-words">"{ev.detail}"</span>
                   </li>
                 ))}
               </ul>

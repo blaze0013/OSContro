@@ -575,13 +575,20 @@ const TiltedCard = ({
   const glareRgb = (parseColor(glareColor) || [255, 255, 255]).join(', ');
   const bleed = Math.ceil(Math.sin((clamp(rotateAmplitude, 0, 60) * Math.PI) / 180) * 24 * Math.max(0, parallax)) + 1;
 
+  const resolvedContainerHeight = containerHeight === '300px' && children ? 'auto' : containerHeight;
+  const resolvedContainerWidth = containerWidth;
+  const resolvedImageWidth = imageWidth === '300px' && children ? '100%' : imageWidth;
+  const resolvedImageHeight = imageHeight === '300px' && children ? 'auto' : imageHeight;
+
   return (
     <figure
       ref={figureRef}
-      className={`tilted-card group relative m-0 flex select-none items-center justify-center outline-none [-webkit-tap-highlight-color:transparent] [touch-action:pan-y_pinch-zoom] data-[active]:z-[2] data-[interactive]:cursor-pointer ${className}`.trim()}
+      className={`tilted-card group relative m-0 flex select-none ${
+        children ? 'items-stretch justify-stretch' : 'items-center justify-center'
+      } outline-none [-webkit-tap-highlight-color:transparent] [touch-action:pan-y_pinch-zoom] data-[active]:z-[2] data-[interactive]:cursor-pointer ${className}`.trim()}
       style={{
-        width: toLength(containerWidth),
-        height: toLength(containerHeight),
+        width: toLength(resolvedContainerWidth),
+        height: resolvedContainerHeight === 'auto' ? undefined : toLength(resolvedContainerHeight),
         perspective: toLength(perspective),
         ...style
       }}
@@ -598,21 +605,31 @@ const TiltedCard = ({
         ref={shadowRef}
         className="pointer-events-none absolute inset-0 m-auto max-h-full max-w-full bg-[var(--tc-shadow-color,rgba(0,0,0,0.55))] opacity-0 blur-[20px] will-change-[transform,opacity]"
         aria-hidden="true"
-        style={{ width: toLength(imageWidth), height: toLength(imageHeight), borderRadius: corner }}
+        style={{
+          width: resolvedImageWidth === 'auto' ? '100%' : toLength(resolvedImageWidth),
+          height: resolvedImageHeight === 'auto' ? '100%' : toLength(resolvedImageHeight),
+          borderRadius: corner
+        }}
       />
       <div
         ref={bodyRef}
-        className="relative max-h-full max-w-full [transform-style:preserve-3d]"
+        className={`relative ${children ? 'w-full flex flex-col flex-1' : 'max-h-full max-w-full'} [transform-style:preserve-3d]`}
         style={
           {
-            width: toLength(imageWidth),
-            height: toLength(imageHeight),
+            width: resolvedImageWidth === 'auto' ? '100%' : toLength(resolvedImageWidth),
+            height: resolvedImageHeight === 'auto' ? undefined : toLength(resolvedImageHeight),
             '--tc-radius': corner,
             '--tc-glare-rgb': glareRgb
           } as CSSProperties
         }
       >
-        <div className="tilted-card__face tilted-card__front absolute inset-0 isolate overflow-hidden rounded-[var(--tc-radius)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]">
+        <div
+          className={`tilted-card__face tilted-card__front ${
+            children && !imageSrc
+              ? 'relative w-full flex flex-col flex-1'
+              : 'absolute inset-0 overflow-hidden'
+          } isolate rounded-[var(--tc-radius)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]`}
+        >
           {imageSrc && (
             <img
               className="pointer-events-none absolute block max-w-none object-cover"
@@ -633,7 +650,7 @@ const TiltedCard = ({
           )}
           {children}
           <span
-            className="pointer-events-none absolute inset-0 z-[5] mix-blend-screen"
+            className="pointer-events-none absolute inset-0 z-[5] mix-blend-screen rounded-[inherit]"
             style={GLARE_STYLE}
             aria-hidden="true"
           />

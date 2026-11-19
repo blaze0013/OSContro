@@ -41,15 +41,15 @@ export function GlobalSwarmCursor() {
   const isDark = theme === 'dark';
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden="true">
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden opacity-60" aria-hidden="true">
       <SwarmCursor
-        count={26}
-        size={2.5}
+        count={16}
+        size={1.8}
         shape="dot"
         color={isDark ? '#E5A866' : '#8C5A2B'}
         accentColor={isDark ? '#F5D27E' : '#D48F4E'}
-        spread={15}
-        speed={1.1}
+        spread={14}
+        speed={1.0}
         idle="roam"
         clickEffect="burst"
         hideCursor={false}
