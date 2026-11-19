@@ -1,11 +1,12 @@
 import { BackendStatus } from './BackendStatus';
+import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '../lib/auth';
 
-export function Header() {
+export function Header({ metaSource }: { metaSource?: string }) {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="border-b border-[var(--color-border-soft)] bg-[var(--color-surface)] px-6 py-4 flex items-center justify-between">
+    <header className="border-b border-[var(--color-border-soft)] bg-[var(--color-surface)] px-6 py-4 flex items-center justify-between transition-colors duration-200">
       <div className="flex items-center space-x-3">
         {/* Simple inline SVG logo */}
         <svg
@@ -27,11 +28,12 @@ export function Header() {
           <p className="text-xs text-[var(--color-text-secondary)] font-medium tracking-wide hidden sm:block">Find your first open-source contribution</p>
         </div>
       </div>
-      <div className="flex items-center space-x-6">
-        <BackendStatus />
+      <div className="flex items-center space-x-3 sm:space-x-4">
+        <BackendStatus metaSource={metaSource} />
+        <ThemeToggle />
         
         {user && (
-          <div className="flex items-center space-x-4 border-l border-[var(--color-border-strong)] pl-6">
+          <div className="flex items-center space-x-4 border-l border-[var(--color-border-strong)] pl-4 sm:pl-6">
             <div className="flex items-center space-x-2 hidden sm:flex">
               {user.photoURL ? (
                 <img src={user.photoURL} alt={user.displayName || 'User'} className="w-6 h-6 rounded-full bg-[var(--color-raised)]" />

@@ -78,8 +78,10 @@ export function ScreenshotUpload({ file, onChange, disabled }: ScreenshotUploadP
       
       {!file ? (
         <div
-          className={`relative block w-full rounded-[12px] border-2 border-dashed p-8 text-center hover:border-[var(--color-border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 transition-colors ${
-            isDragging ? 'border-[var(--color-accent)] bg-[var(--color-raised)]' : 'border-[var(--color-border-soft)] bg-[var(--color-page)]'
+          className={`relative block w-full rounded-[12px] border-2 border-dashed p-8 text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 transition-all duration-200 ${
+            isDragging
+              ? 'border-[var(--color-accent)] bg-[var(--color-raised)] animate-pulse shadow-[0_0_14px_rgba(140,90,43,0.18)] scale-[1.01]'
+              : 'border-[var(--color-border-soft)] bg-[var(--color-page)] hover:border-[var(--color-border-strong)]'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
@@ -107,7 +109,7 @@ export function ScreenshotUpload({ file, onChange, disabled }: ScreenshotUploadP
               type="button"
               disabled={disabled}
               onClick={() => onChange(null)}
-              className="rounded-full p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border-soft)] focus:outline-none disabled:opacity-50 transition-colors"
+              className="rounded-full p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border-soft)] focus:outline-none disabled:opacity-50 transition-all cursor-pointer btn-press hover:-translate-y-0.5 active:scale-[0.95]"
             >
               <span className="sr-only">Remove</span>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

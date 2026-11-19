@@ -10,7 +10,7 @@ export function ArchitectureCard({ repository, architecture }: ArchitectureCardP
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="bg-[var(--color-surface)] rounded-[12px] border border-[var(--color-border-strong)] shadow-[var(--shadow-warm)] overflow-hidden" id="architecture">
+    <div className="bg-[var(--color-surface)] rounded-[12px] border border-[var(--color-border-strong)] shadow-[var(--shadow-warm)] overflow-hidden card-sweep" id="architecture">
       <div className="p-6 border-b border-[var(--color-border-strong)] bg-[var(--color-raised)]">
         <h2 className="text-xl font-semibold text-[var(--color-text-primary)] flex items-center">
           <svg className="w-5 h-5 mr-2 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,11 +39,23 @@ export function ArchitectureCard({ repository, architecture }: ArchitectureCardP
           <p className="text-[var(--color-text-primary)] leading-relaxed">{architecture.summary}</p>
         </div>
 
+        {/* Decorative drawing connection line between architecture sections */}
+        <div className="flex items-center gap-2 py-0.5 text-[var(--color-border-strong)]" aria-hidden="true">
+          <svg className="w-full h-3 overflow-visible" fill="none" viewBox="0 0 300 8">
+            <line x1="0" y1="4" x2="280" y2="4" stroke="currentColor" strokeWidth="1.5" strokeDasharray="6 4" className="architecture-draw-line" />
+            <polyline points="276,1 282,4 276,7" stroke="currentColor" strokeWidth="1.5" fill="none" className="architecture-draw-line" />
+          </svg>
+        </div>
+
         <div>
           <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Technologies</h3>
           <div className="flex flex-wrap gap-2">
-            {architecture.technologies.map(tech => (
-              <span key={tech} className="inline-flex items-center rounded-md bg-[var(--color-raised)] px-2 py-1 text-xs font-medium text-[var(--color-text-primary)] border border-[var(--color-border-soft)]">
+            {architecture.technologies.map((tech, i) => (
+              <span 
+                key={tech} 
+                className="inline-flex items-center rounded-md bg-[var(--color-raised)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-primary)] border border-[var(--color-border-soft)] chip-pop"
+                style={{ animationDelay: `${i * 35}ms` }}
+              >
                 {tech}
               </span>
             ))}
@@ -54,7 +66,7 @@ export function ArchitectureCard({ repository, architecture }: ArchitectureCardP
         <div className="pt-2">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center text-sm font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
+            className="flex items-center text-sm font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors cursor-pointer btn-press hover:-translate-y-0.5 active:scale-[0.98]"
           >
             {isExpanded ? 'Hide Details' : 'Show Detailed Structure & Data Flow'}
             <svg className={`ml-1 w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +81,11 @@ export function ArchitectureCard({ repository, architecture }: ArchitectureCardP
               <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">Key Components</h3>
               <ul className="space-y-3">
                 {architecture.key_components.map((comp, i) => (
-                  <li key={i} className="bg-[var(--color-page)] rounded-[8px] p-4 border border-[var(--color-border-soft)]">
+                  <li 
+                    key={i} 
+                    className="bg-[var(--color-page)] rounded-[8px] p-4 border border-[var(--color-border-soft)] chip-pop"
+                    style={{ animationDelay: `${i * 45}ms` }}
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <span className="font-semibold text-[var(--color-text-primary)]">{comp.name}</span>
                       {comp.path && <span className="font-mono text-xs text-[var(--color-code-text)] bg-[var(--color-code-bg)] px-2 py-1 rounded">{comp.path}</span>}
@@ -84,7 +100,11 @@ export function ArchitectureCard({ repository, architecture }: ArchitectureCardP
               <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">Folder Structure</h3>
               <ul className="space-y-3">
                 {architecture.structure.map((item, i) => (
-                  <li key={i} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 text-sm bg-[var(--color-page)] p-3 rounded-[8px] border border-[var(--color-border-soft)]">
+                  <li 
+                    key={i} 
+                    className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 text-sm bg-[var(--color-page)] p-3 rounded-[8px] border border-[var(--color-border-soft)] chip-pop"
+                    style={{ animationDelay: `${i * 40}ms` }}
+                  >
                     <span className="font-mono font-medium text-[var(--color-code-text)] shrink-0">{item.path}</span>
                     <span className="text-[var(--color-text-secondary)] leading-relaxed">{item.purpose}</span>
                   </li>

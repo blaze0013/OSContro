@@ -24,7 +24,7 @@ export function ScreenshotDiagnosisCard({ diagnosis, fileUrl }: ScreenshotDiagno
   };
 
   return (
-    <div className="bg-[var(--color-surface)] rounded-[12px] border border-[var(--color-border-strong)] shadow-[var(--shadow-warm)] overflow-hidden" id="diagnosis">
+    <div className="bg-[var(--color-surface)] rounded-[12px] border border-[var(--color-border-strong)] shadow-[var(--shadow-warm)] overflow-hidden card-sweep" id="diagnosis">
       <div className="p-6 border-b border-[var(--color-border-strong)] bg-[var(--color-raised)] flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-[var(--color-text-primary)] flex items-center">
@@ -36,7 +36,7 @@ export function ScreenshotDiagnosisCard({ diagnosis, fileUrl }: ScreenshotDiagno
           </h2>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Analysis of your provided bug screenshot.</p>
         </div>
-        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium shrink-0 ${badgeColor}`}>
+        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium shrink-0 chip-pop ${badgeColor}`}>
           Confidence: {diagnosis.confidence}
         </span>
       </div>
@@ -101,11 +101,11 @@ export function ScreenshotDiagnosisCard({ diagnosis, fileUrl }: ScreenshotDiagno
             <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3 uppercase tracking-wider">Likely Files to Check</h4>
             <ul className="space-y-2">
               {diagnosis.likely_files.map((file, i) => (
-                <li key={i} className="flex items-center justify-between bg-[var(--color-code-bg)] rounded-[8px] border border-[var(--color-border-soft)] p-2 max-w-lg">
+                <li key={i} className="flex items-center justify-between bg-[var(--color-code-bg)] rounded-[8px] border border-[var(--color-border-soft)] p-2 max-w-lg chip-pop" style={{ animationDelay: `${i * 45}ms` }}>
                   <span className="font-mono text-sm text-[var(--color-code-text)] font-medium truncate mr-2" title={file}>{file}</span>
                   <button
                     onClick={() => handleCopy(file)}
-                    className="shrink-0 p-1.5 rounded-md hover:bg-[var(--color-border-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                    className="shrink-0 p-1.5 rounded-md hover:bg-[var(--color-border-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer btn-press hover:-translate-y-0.5 active:scale-[0.98] active:ring-1 active:ring-[var(--color-accent)]/30"
                   >
                     {copiedPath === file ? (
                       <svg className="w-4 h-4 text-[var(--color-badge-beginner-text)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

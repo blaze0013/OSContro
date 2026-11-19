@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { health, modelHealth } from '../lib/api';
 import type { HealthResponse, ModelHealthResponse } from '../types/api';
 
-export function BackendStatus() {
+export function BackendStatus({ metaSource }: { metaSource?: string }) {
   const [status, setStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [data, setData] = useState<HealthResponse | null>(null);
   const [modelStatus, setModelStatus] = useState<ModelHealthResponse | null>(null);
@@ -17,12 +17,12 @@ export function BackendStatus() {
         try {
           const mHealth = await modelHealth();
           setModelStatus(mHealth);
-        } catch (e) {
+        } catch {
           // If it fails (e.g. 404 if not implemented yet), we just hide model details silently
           setModelStatus(null);
         }
 
-      } catch (err) {
+      } catch {
         setStatus('offline');
         setModelStatus(null);
       }
@@ -33,6 +33,8 @@ export function BackendStatus() {
     const interval = setInterval(checkHealth, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const isMockData = import.meta.env.VITE_USE_MOCK === 'true' || Boolean(data?.fixture_mode) || metaSource === 'fixture';
 
   return (
     <div className="flex items-center space-x-2 text-xs font-mono">
@@ -64,7 +66,7 @@ export function BackendStatus() {
               </span>
             )}
           </span>
-          {data.fixture_mode && (
+          {isMockData && (
             <span className="ml-2 px-1.5 py-0.5 rounded bg-[var(--color-badge-intermediate-bg)] text-[var(--color-badge-intermediate-text)] border border-[var(--color-border-soft)]">
               Mock Data
             </span>

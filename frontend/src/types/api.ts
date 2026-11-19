@@ -65,6 +65,7 @@ export interface Meta {
   model: string;
   files_analyzed: string[];
   context_truncated: boolean;
+  source?: 'gemma' | 'fixture';
 }
 
 export interface AnalyzeResponse {

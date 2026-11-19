@@ -21,10 +21,10 @@ export function RepoInput({ url, onChange, error, disabled }: RepoInputProps) {
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           placeholder="https://github.com/owner/repo"
-          className={`block w-full rounded-md border-0 py-3 px-4 bg-[var(--color-page)] text-[var(--color-text-primary)] shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 ${
+          className={`block w-full rounded-md border-0 py-3 px-4 bg-[var(--color-page)] text-[var(--color-text-primary)] shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset focus:ring-[var(--color-accent)] focus:shadow-[0_0_0_3px_rgba(140,90,43,0.18)] transition-all duration-150 sm:text-sm sm:leading-6 ${
             error
               ? 'ring-[var(--color-error-border)] focus:ring-[var(--color-error-border)] placeholder:text-[var(--color-error-text)]'
-              : 'ring-[var(--color-border-soft)] focus:ring-[var(--color-accent)] placeholder:text-[var(--color-text-secondary)]'
+              : 'ring-[var(--color-border-soft)] placeholder:text-[var(--color-text-secondary)]'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         />
         {error && (
@@ -45,7 +45,7 @@ export function RepoInput({ url, onChange, error, disabled }: RepoInputProps) {
                 type="button"
                 disabled={disabled}
                 onClick={() => onChange(exampleUrl)}
-                className="inline-flex items-center rounded-full bg-[var(--color-page)] px-3 py-1 text-xs font-medium text-[var(--color-text-primary)] ring-1 ring-inset ring-[var(--color-border-soft)] hover:bg-[var(--color-raised)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center rounded-full bg-[var(--color-page)] px-3 py-1 text-xs font-medium text-[var(--color-text-primary)] ring-1 ring-inset ring-[var(--color-border-soft)] hover:bg-[var(--color-raised)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] active:ring-2 active:ring-[var(--color-accent)]/30 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer btn-press"
               >
                 {shortName}
               </button>

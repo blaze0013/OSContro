@@ -1,5 +1,6 @@
 import { useAuth } from '../lib/auth';
 import { isFirebaseConfigured } from '../lib/firebase';
+import { ThemeToggle } from './ThemeToggle';
 
 export function LoginScreen() {
   const { signInWithGoogle, signInWithGitHub, signInAsGuest, error, loading } = useAuth();
@@ -19,7 +20,11 @@ export function LoginScreen() {
   const showNotConfigured = !USE_MOCK && !isFirebaseConfigured;
 
   return (
-    <div className="min-h-screen bg-[var(--color-page)] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--color-page)] flex flex-col items-center justify-center p-4 relative">
+      <div className="absolute top-6 right-6">
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border-soft)] rounded-[12px] p-8 shadow-[var(--shadow-warm-md)] text-center">
         
         <div className="flex justify-center mb-6">

@@ -1,5 +1,4 @@
 import type { AnalyzeResponse, HealthResponse, ModelHealthResponse } from '../types/api';
-import { MOCK_RESPONSE_NO_SCREENSHOT, MOCK_RESPONSE_WITH_SCREENSHOT } from '../data/mocks';
 import { auth } from './firebase';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -64,6 +63,7 @@ export async function analyze(
   options?: { signal?: AbortSignal }
 ): Promise<AnalyzeResponse> {
   if (import.meta.env.VITE_USE_MOCK === 'true') {
+    const { MOCK_RESPONSE_NO_SCREENSHOT, MOCK_RESPONSE_WITH_SCREENSHOT } = await import('../data/mocks');
     await new Promise((resolve) => setTimeout(resolve, 1500));
     return screenshot ? MOCK_RESPONSE_WITH_SCREENSHOT : MOCK_RESPONSE_NO_SCREENSHOT;
   }
@@ -114,4 +114,3 @@ export async function analyze(
 
   return res.json();
 }
-

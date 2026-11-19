@@ -25,10 +25,11 @@ export function PRChecklist({ items }: PRChecklistProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isComplete = items.length > 0 && checkedItems.size === items.length;
   const progress = Math.round((checkedItems.size / items.length) * 100) || 0;
 
   return (
-    <div className="bg-[var(--color-surface)] rounded-[12px] border border-[var(--color-border-strong)] shadow-[var(--shadow-warm)] overflow-hidden" id="checklist">
+    <div className="bg-[var(--color-surface)] rounded-[12px] border border-[var(--color-border-strong)] shadow-[var(--shadow-warm)] overflow-hidden card-sweep" id="checklist">
       <div className="p-6 border-b border-[var(--color-border-strong)] bg-[var(--color-raised)] flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-[var(--color-text-primary)] flex items-center">
@@ -41,7 +42,7 @@ export function PRChecklist({ items }: PRChecklistProps) {
         
         <button
           onClick={copyAsMarkdown}
-          className="inline-flex items-center text-xs font-semibold text-[var(--color-text-primary)] bg-[var(--color-page)] border border-[var(--color-border-soft)] hover:bg-[var(--color-border-soft)] px-3 py-1.5 rounded-[6px] transition-colors shadow-sm"
+          className="inline-flex items-center text-xs font-semibold text-[var(--color-text-primary)] bg-[var(--color-page)] border border-[var(--color-border-soft)] hover:bg-[var(--color-border-soft)] px-3 py-1.5 rounded-[6px] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] active:ring-1 active:ring-[var(--color-accent)]/30 transition-all shadow-sm cursor-pointer btn-press"
         >
           {copied ? (
             <>
@@ -64,29 +65,49 @@ export function PRChecklist({ items }: PRChecklistProps) {
       <div className="p-6">
         <div className="mb-4 flex items-center justify-between text-sm">
           <span className="text-[var(--color-text-secondary)] font-medium">Progress</span>
-          <span className="font-semibold text-[var(--color-text-primary)]">{checkedItems.size} of {items.length} completed</span>
+          <span className={`font-semibold transition-all duration-200 ${
+            isComplete ? 'text-[var(--color-badge-beginner-text)] font-bold celebrate-pulse' : 'text-[var(--color-text-primary)]'
+          }`}>
+            {checkedItems.size} of {items.length} completed ({progress}%)
+            {isComplete && <span className="ml-1.5">🎉</span>}
+          </span>
         </div>
-        <div className="w-full bg-[var(--color-page)] border border-[var(--color-border-soft)] rounded-full h-2 mb-6 overflow-hidden">
-          <div className="bg-[var(--color-accent)] h-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+        <div className={`w-full bg-[var(--color-page)] border border-[var(--color-border-soft)] rounded-full h-2.5 mb-6 p-0.5 relative ${
+          isComplete ? 'celebrate-pulse ring-1 ring-[var(--color-badge-beginner-text)]/40' : ''
+        }`}>
+          <div 
+            className="bg-gradient-to-r from-[var(--color-accent)] to-[#C27D3E] h-full rounded-full transition-all duration-400 ease-out relative"
+            style={{ width: `${progress}%` }}
+          >
+            {progress > 0 && (
+              <span className={`absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#E5A866] border border-[var(--color-surface)] block transition-all ${
+                isComplete ? 'shadow-[0_0_12px_rgba(229,168,102,1)] scale-110' : 'shadow-[0_0_8px_rgba(229,168,102,0.9)]'
+              }`} />
+            )}
+          </div>
         </div>
 
         <ul className="space-y-3">
           {items.map((item, index) => {
             const isChecked = checkedItems.has(index);
             return (
-              <li key={index} className="flex items-start">
-                <div className="flex items-center h-5">
+              <li key={index} className="flex items-start group">
+                <div className="flex items-center h-5 mt-0.5">
                   <input
                     id={`checklist-${index}`}
                     type="checkbox"
                     checked={isChecked}
                     onChange={() => toggleItem(index)}
-                    className="w-4 h-4 rounded border-[var(--color-border-strong)] bg-[var(--color-page)] text-[var(--color-accent)] focus:ring-[var(--color-accent)] focus:ring-offset-[var(--color-surface)] cursor-pointer"
+                    className="w-4 h-4 rounded border-[var(--color-border-strong)] bg-[var(--color-page)] text-[var(--color-accent)] focus:ring-[var(--color-accent)] focus:ring-offset-[var(--color-surface)] cursor-pointer transition-transform duration-150 active:scale-90"
                   />
                 </div>
                 <label
                   htmlFor={`checklist-${index}`}
-                  className={`ml-3 text-sm cursor-pointer transition-colors ${isChecked ? 'text-[var(--color-text-secondary)] line-through' : 'text-[var(--color-text-primary)] hover:text-[var(--color-accent)]'}`}
+                  className={`ml-3 text-sm cursor-pointer select-none transition-all duration-200 ${
+                    isChecked 
+                      ? 'strike-through-anim is-checked text-[var(--color-text-secondary)] opacity-60' 
+                      : 'text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)]'
+                  }`}
                 >
                   {item}
                 </label>
