@@ -1,5 +1,5 @@
 =================================================================
-API CONTRACT v1.1  (source of truth, identical in the frontend prompt)
+API CONTRACT v1.3  (source of truth, identical in the frontend prompt)
 =================================================================
 Conventions: JSON UTF-8, snake_case keys, difficulty/confidence enums are capitalized exactly as shown.
 
@@ -58,11 +58,16 @@ POST /api/analyze   (multipart/form-data)
     "uncertainty": "string"
   },
   "pr_checklist": ["string"],            // ordered, actionable steps
-  "warnings": ["string"],                // e.g. truncated context, unverified paths, thin evidence
-  "meta": {"model": "string", "files_analyzed": ["string"], "context_truncated": false}
+  "warnings": ["string"],                // e.g. truncated context, unverified paths, thin evidence, "Demo data"
+  "meta": {
+    "model": "string",
+    "files_analyzed": ["string"],
+    "context_truncated": false,
+    "source": "gemma | fixture"          // contract v1.3: "gemma" for live model inference, "fixture" for fixture mode
+  }
 }
 
-Error responses: matching HTTP status and body {"error": {"code": "<CODE>", "message": "string"}}
+Error responses: matching HTTP status and body {"error": {"code": "<CODE>", "message": "string", "detail": "optional string"}}
   UNAUTHENTICATED 401 | INVALID_URL 400 | IMAGE_INVALID 415 | IMAGE_TOO_LARGE 413 | REPO_NOT_FOUND 404 |
   GITHUB_RATE_LIMIT 429 | MODEL_ERROR 502 | MODEL_INVALID_OUTPUT 502 | INTERNAL 500
 =================================================================

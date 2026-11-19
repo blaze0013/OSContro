@@ -69,6 +69,7 @@ class MetaModel(BaseModel):
     model: str
     files_analyzed: List[str]
     context_truncated: bool
+    source: Literal["gemma", "fixture"] = "gemma"
 
 class AnalyzeResponse(BaseModel):
     repository: Repository

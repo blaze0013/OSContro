@@ -6,8 +6,8 @@ def get_fixture_response(
     repo_context: Optional[Dict[str, Any]] = None,
     warning: Optional[str] = None
 ) -> dict:
-    warnings_list: List[str] = []
-    if warning:
+    warnings_list: List[str] = ["Demo data"]
+    if warning and warning not in warnings_list:
         warnings_list.append(warning)
 
     if repo_context:
@@ -144,9 +144,10 @@ def get_fixture_response(
             ],
             "warnings": warnings_list,
             "meta": {
-                "model": "gemma-4-31b-it (repository-grounded fallback)",
+                "model": "gemma-4-31b-it (fixture)",
                 "files_analyzed": list(dict.fromkeys([doc_file, main_file, test_file])),
-                "context_truncated": bool(repo_context.get("truncated", False))
+                "context_truncated": bool(repo_context.get("truncated", False)),
+                "source": "fixture"
             }
         }
 
@@ -221,7 +222,8 @@ def get_fixture_response(
         "meta": {
             "model": "fixture-model",
             "files_analyzed": ["app/main.py", "README.md"],
-            "context_truncated": False
+            "context_truncated": False,
+            "source": "fixture"
         }
     }
     

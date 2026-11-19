@@ -124,6 +124,13 @@ class GemmaService:
             text = text[start : end + 1]
         return text
 
+    def _parse_json(self, text: str) -> Optional[Dict[str, Any]]:
+        cleaned = self._strip_json(text)
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            return None
+
     def _build_contents(
         self,
         prompt: str,
@@ -165,6 +172,7 @@ class GemmaService:
         if last_error:
             raise last_error
         return ""
+
     @staticmethod
     def _map_error(e: Exception) -> APIError:
         """Map genai SDK errors to our contract APIError."""
@@ -188,6 +196,66 @@ class GemmaService:
             return APIError(400, "MODEL_ERROR", "Request too large or invalid", detail=str(e))
         else:
             return APIError(502, "MODEL_ERROR", "The AI model encountered an unexpected error", detail=str(e))
+
+    def validate_evidence(self, data: Dict[str, Any], repo_context: Dict[str, Any]) -> tuple[bool, str]:
+        """Validate that every contribution's evidence cites at least one file or issue from the context."""
+        tree = set(repo_context.get("tree", []))
+        for p in repo_context.get("files", {}).keys():
+            tree.add(p)
+        for p in repo_context.get("manifests", {}).keys():
+            tree.add(p)
+        if repo_context.get("readme"):
+            tree.add("README.md")
+            tree.add("README")
+        if repo_context.get("contributing"):
+            tree.add("CONTRIBUTING.md")
+            tree.add("CONTRIBUTING")
+
+        normalized_paths = {p.strip().lstrip("./").lower() for p in tree if p}
+        basenames = {p.split("/")[-1].lower() for p in normalized_paths if p}
+
+        issues = repo_context.get("issues", [])
+        has_issues = bool(issues)
+        issue_titles = [i.get("title", "").lower() for i in issues if i.get("title")]
+
+        contributions = data.get("contributions", [])
+        if not isinstance(contributions, list) or len(contributions) != 3:
+            return False, "Expected exactly 3 contributions."
+
+        for idx, contrib in enumerate(contributions):
+            evidence_items = contrib.get("evidence", [])
+            file_paths = [p.strip().lstrip("./").lower() for p in contrib.get("file_paths", [])]
+            
+            has_grounded_evidence = False
+            for ev in evidence_items:
+                source = ev.get("source", "").strip().lstrip("./").lower()
+                detail = ev.get("detail", "").strip().lower()
+
+                # 1. Source matches a known context path or basename
+                if source in normalized_paths or source in basenames:
+                    has_grounded_evidence = True
+                    break
+                
+                # 2. Source contains a known path (e.g. "src/index.js:12")
+                if any(p in source for p in normalized_paths if len(p) >= 3):
+                    has_grounded_evidence = True
+                    break
+
+                # 3. Source or detail references an issue
+                if has_issues and ("issue" in source or any(t in detail for t in issue_titles)):
+                    has_grounded_evidence = True
+                    break
+
+                # 4. Detail explicitly mentions a verified file path
+                if any(fp in detail for fp in file_paths if fp in normalized_paths):
+                    has_grounded_evidence = True
+                    break
+
+            if not has_grounded_evidence:
+                title = contrib.get("title", f"Contribution #{idx + 1}")
+                return False, f"Contribution '{title}' evidence does not cite a file or issue from the context."
+
+        return True, ""
 
     async def generate_analysis(
         self,
@@ -243,30 +311,55 @@ class GemmaService:
             else:
                 raise err
 
-        result = self._parse_and_finalize(raw_text, repo_context)
-        if result:
-            return result
+        raw_data = self._parse_json(raw_text)
+        evidence_error = None
+        if raw_data:
+            valid_evidence, evidence_error = self.validate_evidence(raw_data, repo_context)
+            if valid_evidence:
+                result = self._finalize_response(raw_data, repo_context)
+                if result:
+                    return result
 
         # --- Retry once with repair prompt ---
-        repair = (
-            "Your previous output was invalid or did not match the required schema. "
-            "Return ONLY valid raw JSON — no markdown, no explanation.\n\n"
-            f"Previous output (first 500 chars):\n{raw_text[:500]}"
-        )
-        retry_contents = self._build_contents(prompt + "\n\n" + repair, None, None)
+        if evidence_error:
+            repair_msg = (
+                f"Validation failed: {evidence_error}\n"
+                "Every contribution in 'contributions' MUST cite at least one real file path or issue present in the context in its 'evidence'.\n"
+                "Return ONLY valid raw JSON adhering strictly to the schema."
+            )
+        else:
+            repair_msg = (
+                "Your previous output was invalid or did not match the required schema. "
+                "Return ONLY valid raw JSON — no markdown, no explanation.\n\n"
+                f"Previous output (first 500 chars):\n{raw_text[:500]}"
+            )
+
+        retry_contents = self._build_contents(prompt + "\n\n" + repair_msg, None, None)
         try:
             raw_text2 = await asyncio.to_thread(self._call_model, retry_contents)
         except Exception as e:
             raise self._map_error(e)
 
-        result2 = self._parse_and_finalize(raw_text2, repo_context)
-        if result2:
-            return result2
+        raw_data2 = self._parse_json(raw_text2)
+        if raw_data2:
+            valid_evidence2, evidence_error2 = self.validate_evidence(raw_data2, repo_context)
+            if valid_evidence2:
+                result2 = self._finalize_response(raw_data2, repo_context)
+                if result2:
+                    return result2
+            else:
+                raise APIError(
+                    502,
+                    "MODEL_INVALID_OUTPUT",
+                    "Model output failed evidence grounding validation",
+                    detail=f"Evidence does not reference a file path or issue from context: {evidence_error2}"
+                )
 
         raise APIError(
             502,
             "MODEL_INVALID_OUTPUT",
             "Model returned invalid JSON after two attempts.",
+            detail="Output could not be parsed as valid JSON matching schema."
         )
 
     async def plan_files(self, repo_context: Dict[str, Any]) -> List[str]:
@@ -303,11 +396,8 @@ class GemmaService:
         """Optional self-check: drop contributions whose evidence relies on un-fetched files."""
         valid_contributions = []
         for c in result.contributions:
-            # Simple check: if paths_verified is false, or if it claims files that we didn't fetch (and aren't README/issues).
-            # Actually, the requirement: "drops any contribution whose evidence is not supported by the fetched files"
             is_valid = True
             for file_path in c.file_paths:
-                # We allow README, CONTRIBUTING, and anything in fetched_files
                 if "README" not in file_path and "CONTRIBUTING" not in file_path and file_path not in fetched_files:
                     is_valid = False
                     break
@@ -315,25 +405,11 @@ class GemmaService:
             if is_valid:
                 valid_contributions.append(c)
                 
-        # If we dropped some, we might have less than 3. The API contract says exactly 3, but this is a self-check pass.
-        # If we drop all of them, or don't have 3, we should let it pass or pad it?
-        # Actually, the contract says "exactly 3 items". We shouldn't break the contract. 
-        # If dropping breaks the contract, we can just return the original result but add a warning.
         if len(valid_contributions) == 3:
             result.contributions = valid_contributions
         else:
             result.warnings.append("AGENTIC_MODE warning: Some contributions were not perfectly supported by fetched files, but were retained to meet the 3-item contract.")
         return result
-
-    def _parse_and_finalize(
-        self, raw: str, repo_context: Dict[str, Any]
-    ) -> Optional[AnalyzeResponse]:
-        cleaned = self._strip_json(raw)
-        try:
-            data = json.loads(cleaned)
-        except json.JSONDecodeError:
-            return None
-        return self._finalize_response(data, repo_context)
 
     def _finalize_response(
         self, data: Dict[str, Any], repo_context: Dict[str, Any]
@@ -371,10 +447,20 @@ class GemmaService:
 
         data["warnings"] = list(dict.fromkeys(warnings))
 
+        analyzed_files = list(repo_context.get("files", {}).keys())
+        for m in repo_context.get("manifests", {}).keys():
+            if m not in analyzed_files:
+                analyzed_files.append(m)
+        if repo_context.get("readme") and "README.md" not in analyzed_files:
+            analyzed_files.append("README.md")
+        if repo_context.get("contributing") and "CONTRIBUTING.md" not in analyzed_files:
+            analyzed_files.append("CONTRIBUTING.md")
+
         data["meta"] = {
             "model": self.model,
-            "files_analyzed": list(repo_context.get("files", {}).keys()),
+            "files_analyzed": analyzed_files,
             "context_truncated": repo_context.get("truncated", False),
+            "source": "gemma",
         }
 
         try:

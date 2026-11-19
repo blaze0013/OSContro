@@ -48,3 +48,22 @@ scratch/
 !components.json
 !frontend/components.json
 !frontend/src/lib/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+
+# Environments and secrets
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
